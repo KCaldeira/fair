@@ -36,10 +36,18 @@ ssp  = long[(long["Scenario"] == "ssp245")     & (long["Year"] >= 2015)]
 combo = pd.concat([hist, ssp], ignore_index=True)
 combo["Scenario"] = "ssp245"  # one stitched scenario name
 
-# 4) Pivot back to FAIR’s required wide format: Scenario, Variable, Unit, 1750, …, 2100
+# 4) Pivot back to FAIR's required wide format: Scenario, Variable, Unit, 1750, …, 2100
 wide = combo.pivot_table(index=["Scenario","Variable","Unit"],
                          columns="Year", values="Value").reset_index()
-wide = wide.sort_index(axis=1)
+
+# Fix: Sort columns properly by separating year columns from metadata columns
+# Get metadata columns (non-year columns)
+metadata_cols = ["Scenario", "Variable", "Unit"]
+# Get year columns and sort them numerically
+year_cols = [col for col in wide.columns if col not in metadata_cols]
+year_cols_sorted = sorted(year_cols, key=int)
+# Reorder columns: metadata first, then sorted years
+wide = wide[metadata_cols + year_cols_sorted]
 
 # 5) Save it
 out = Path("inputs"); out.mkdir(exist_ok=True, parents=True)
