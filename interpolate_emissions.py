@@ -38,11 +38,12 @@ def interpolate_emissions():
     print(f"Target years: {min(full_year_range)} to {max(full_year_range)}")
     print(f"Number of target years: {len(full_year_range)}")
     
-    # Create a new DataFrame with the full year range
-    df_interpolated = df_baseline[metadata_cols].copy()
-    
-    # For each row (emission type), interpolate the values
+    # Create a more efficient approach to avoid DataFrame fragmentation
     print("Interpolating emissions data...")
+    
+    # Pre-allocate the interpolated data as a list of dictionaries
+    interpolated_data = []
+    
     for idx, row in df_baseline.iterrows():
         # Get the available values for this emission type
         available_values = []
@@ -54,17 +55,29 @@ def interpolate_emissions():
                 available_values.append(value)
                 available_years.append(year)
         
+        # Create the row data dictionary
+        row_data = {
+            'Scenario': row['Scenario'],
+            'Variable': row['Variable'],
+            'Unit': row['Unit']
+        }
+        
         if len(available_values) < 2:
             print(f"Warning: Row {idx} ({row['Variable']}) has insufficient data for interpolation")
             # Fill with zeros or the single available value
-            interpolated_values = [available_values[0] if available_values else 0] * len(full_year_range)
+            default_value = available_values[0] if available_values else 0
+            for year in full_year_range:
+                row_data[str(year)] = default_value
         else:
             # Perform linear interpolation
             interpolated_values = np.interp(full_year_range, available_years, available_values)
+            for year, value in zip(full_year_range, interpolated_values):
+                row_data[str(year)] = value
         
-        # Add the interpolated values to the new DataFrame
-        for year, value in zip(full_year_range, interpolated_values):
-            df_interpolated.loc[idx, str(year)] = value
+        interpolated_data.append(row_data)
+    
+    # Create the DataFrame from the list of dictionaries (much more efficient)
+    df_interpolated = pd.DataFrame(interpolated_data)
     
     # Save the interpolated emissions file
     output_file = "inputs/emissions_ssp245_interpolated.csv"

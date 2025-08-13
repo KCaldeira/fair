@@ -4,16 +4,31 @@ This document is intended for LLMs and collaborators to understand the project's
 
 ## Project Status
 
-**Current Phase**: FAIR model setup and data preparation
+**Current Phase**: FAIR model analysis and scenario comparison (facing log warnings)
 **Last Updated**: 2025-01-13
 
+### Current Challenge
+The project is currently blocked by "invalid value encountered in log" warnings from FAIR's CH4 lifetime calculation. The warnings occur in `/home/kcaldeira/github/fair/.venv/lib/python3.12/site-packages/fair/gas_cycle/ch4_lifetime.py:73` during the model run.
+
+**Root Cause**: Temperature values passed to the CH4 lifetime function contain invalid values that cause problems in the logarithm calculation: `np.log(1 + temperature * ch4_lifetime_temperature_sensitivity)`
+
+**Investigation Needed**: 
+- Check temperature initialization in FAIR
+- Verify all temperature arrays are properly initialized
+- Consider if manual species definition vs. FAIR's built-in species is causing the issue
+- Explore using FAIR's `fill_from_rcmip()` method for proper data loading
+
 ### Current Implementation
-- **FAIR Model Setup**: Basic FAIR model configuration with SSP245 scenario
-- **Data Sources**: RCMIP (Representative Concentration Model Intercomparison Project) emissions data
-- **Data Processing**: Scripts to download and process RCMIP data to CSV format
+- **FAIR Model Setup**: Complete FAIR model configuration with SSP245 scenario
+- **Data Sources**: RCMIP (Representative Concentration Model Intercomparison Project) emissions data + Excel GDP/carbon intensity data
+- **Data Processing Pipeline**: Complete workflow from RCMIP download to counterfactual scenario generation
 - **Available Scripts**:
   - `fair_ssp.py`: Demonstrates FAIR model setup and RCMIP data integration
   - `fair_ssp_csv.py`: Downloads and processes RCMIP emissions data
+  - `interpolate_emissions.py`: Interpolates emissions data to fill all years (1750-2023)
+  - `create_counterfactual_emissions.py`: Creates counterfactual emissions from original data
+  - `create_counterfactual_interpolated.py`: Creates counterfactual emissions from interpolated data
+  - `run_fair_comparison.py`: Runs FAIR model comparison between baseline and counterfactual scenarios
 
 ## Environment Setup
 
@@ -60,19 +75,30 @@ The virtual environment contains all required dependencies including FAIR v2.2.2
 
 ## Current Project Goals
 
-1. ✅ **FAIR Model Setup**: Basic FAIR model implementation with SSP245 scenario
+1. ✅ **FAIR Model Setup**: Complete FAIR model implementation with SSP245 scenario
 2. ✅ **Data Sources**: RCMIP emissions data integration
-3. 🔄 **Data Collection**: Process historical GDP and carbon intensity data from Excel file
-4. 🔄 **Scenario Generation**: Create baseline and 1975 carbon intensity counterfactual scenarios
-5. ⏳ **Analysis**: Compare climate outcomes between scenarios
-6. ⏳ **Visualization**: Create clear visualizations of results
+3. ✅ **Data Collection**: Processed historical GDP and carbon intensity data from Excel file
+4. ✅ **Scenario Generation**: Created baseline and 1975 carbon intensity counterfactual scenarios
+5. ✅ **Data Processing Pipeline**: Complete workflow from RCMIP download to counterfactual generation
+6. 🔄 **Analysis**: FAIR model comparison script created but facing log warnings
+7. ⏳ **Visualization**: Visualization tools implemented but not yet executed due to warnings
 
 ## Next Steps
 
-1. **Examine Excel Data**: Analyze `combined_global_data_v2.xlsx` to understand available GDP and emissions data
-2. **Create Custom Scenarios**: Develop scenarios for 1975 carbon intensity counterfactual analysis
-3. **Integrate Historical Data**: Combine RCMIP data with historical GDP/carbon intensity data
-4. **Run Comparative Analysis**: Execute FAIR model runs for baseline vs. counterfactual scenarios
+### Immediate Priority: Fix Log Warnings
+1. **Investigate Temperature Initialization**: Check how FAIR initializes temperature arrays and ensure proper initialization
+2. **Debug Temperature Values**: Add debugging to identify which temperature values are causing the log warnings
+3. **Compare with Working Example**: Test the `fair_ssp.py` example to see if it has the same warnings
+4. **Consider Alternative Approaches**: 
+   - Use FAIR's built-in species instead of manual definition
+   - Use `fill_from_rcmip()` method for data loading
+   - Check if the issue is related to the custom emissions data format
+
+### After Fixing Warnings
+1. **Execute FAIR Comparison**: Run `run_fair_comparison_proper.py` to compare baseline vs. counterfactual scenarios
+2. **Analyze Results**: Review temperature and CO2 concentration differences
+3. **Validate Findings**: Compare results with climate science expectations
+4. **Document Insights**: Update documentation with key findings and implications
 
 ## Important Notes
 
@@ -80,6 +106,7 @@ The virtual environment contains all required dependencies including FAIR v2.2.2
 - All assumptions and methodologies should be clearly documented
 - Results should be validated against established climate science
 - Code should be educational and well-explained for future researchers
+- **Documentation Maintenance**: The user prefers to keep README.md and CONTINUATION.md files updated as the project progresses
 
 ## Contact
 
